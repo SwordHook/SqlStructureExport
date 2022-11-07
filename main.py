@@ -6,37 +6,38 @@ import pymysql
 from docx import Document
 from docx.shared import Pt
 from docx.oxml.ns import qn
-import pandas as pd
 import tkinter as tk
 from tkinter import *
 
 win1 = tk.Tk()  # 常见窗口对象
 win1.title('SqlStructureExportHelper')  # 添加窗体名称
-win1.geometry("500x500")
+win1.geometry("550x500")
 
-tk.Label(win1, text="地址：").grid(row=0, column=0, sticky="e", ipadx=100)
-tk.Label(win1, text="端口：").grid(row=1, column=0, sticky="e", ipadx=100)
-tk.Label(win1, text="用户名：").grid(row=2, column=0, sticky="e", ipadx=100)
-tk.Label(win1, text="密码：").grid(row=3, column=0, sticky="e", ipadx=100)
-choose_database_label = tk.Label(win1, text="数据库：")
+tk.Label(win1, text="地址：").grid(row=0, column=0, sticky="e", padx=(150, 50))
+tk.Label(win1, text="端口：").grid(row=1, column=0, sticky="e", padx=(150, 50))
+tk.Label(win1, text="用户名：").grid(row=2, column=0, sticky="e", padx=(150, 50))
+tk.Label(win1, text="密码：").grid(row=3, column=0, sticky="e", padx=(150, 50))
 
 host_entry = tk.Entry(win1)
-host_entry.grid(row=0, column=1, pady=10, sticky="e")
+host_entry.grid(row=0, column=1, pady=10, sticky="w")
 port_entry = tk.Entry(win1)
-port_entry.grid(row=1, column=1, pady=10, sticky="e")
+port_entry.grid(row=1, column=1, pady=10, sticky="w")
 username_entry = tk.Entry(win1)
-username_entry.grid(row=2, column=1, pady=10, sticky="e")
+username_entry.grid(row=2, column=1, pady=10, sticky="w")
 password_entry = tk.Entry(win1)
-password_entry.grid(row=3, column=1, pady=10, sticky="e")
+password_entry.grid(row=3, column=1, pady=10, sticky="w")
 
-host_entry.insert(INSERT, "localhost")
-port_entry.insert(INSERT, 3306)
+host_entry.insert(INSERT, "223.84.77.163")
+port_entry.insert(INSERT, 33306)
 username_entry.insert(INSERT, "root")
+password_entry.insert(INSERT, "leishu2022")
 
 variable = tk.StringVar(win1)
 
-listbox1 = Listbox(win1, selectmode=MULTIPLE)
+scorllbar = tk.Scrollbar(win1, orient=tk.HORIZONTAL)
+listbox1 = Listbox(win1, selectmode=MULTIPLE, xscrollcommand=scorllbar.set)
 listbox1.config(width=30)
+scorllbar.config(command=listbox1.xview)
 
 
 def show():
@@ -57,14 +58,17 @@ def show():
 
     a = cursor.fetchall()
 
-    choose_database_label.grid(row=6, column=0)
-
     choose_database_option = tk.OptionMenu(win1, variable, *a)
+
+    oMenuWidth = len(str(max(a, key=len))) + 2
+    choose_database_option.config(width=oMenuWidth)
+
     variable.set("点击选择数据库")
-    choose_database_option.grid(row=6, column=1, pady=10)
+    choose_database_option.grid(row=6,column=1, pady=10)
 
     def callback(*args):
         listbox1.grid(row=7, column=0, pady=10, sticky="e")
+        scorllbar.grid(row=8, column=0,padx=(40,0), pady=10, sticky=tk.E + tk.W)
         listbox1.delete(0, END)
         table_name = variable.get()
         remove_chars = '[·’!"\#$%&\'()＃！（）*+,./:;<=>?\@，：?￥★、…．＞【】［］《》？“”‘’\[\\]^`{|}~]+'
@@ -98,7 +102,8 @@ def exportWord():
             if file.endswith('.xlsx'):
                 print(file)
     except FileNotFoundError:
-        print('未传入任何文件夹')
+        msgbox.showerror('导出中止', '未传入任何文件夹')
+        return
 
     # 根据表名查询对应的字段相关信息
     def query(tableName):
@@ -165,8 +170,11 @@ def exportWord():
     # 获取当前库下所有的表名信息和表注释信息
 
     ichose = []
-    items = []
     items = listbox1.curselection()
+    if len(items) == 0:
+        msgbox.showerror('导出中止', '未选择任何表')
+        return
+
     for i in range(len(items)):
         ichose.append(listbox1.get(items[i]))
     # 循环查询数据库，获取表字段详细信息，并调用generateWord，生成word数据
@@ -176,11 +184,12 @@ def exportWord():
         generateWord(data, document, str(singleTableName))
     # 保存至文档
     document.save(Folderpath + '\\数据库设计.docx')
-    msgbox.showinfo('导出成功', '数据库结构导出成功')
+    if len(Folderpath) != 0:
+        msgbox.showinfo('导出成功', '数据库结构导出成功')
 
 
 bt_get_table = tk.Button(win1, text="获取库信息", width=10, command=show)
-bt_get_table.grid(row=5, columnspan=2, sticky="e", pady=5)
+bt_get_table.grid(row=4, column=1, sticky="w", pady=5)
 bt_export = tk.Button(win1, text="选择文件夹导出", width=15, command=exportWord)
 
 win1.mainloop()  # 执行窗体
