@@ -64,11 +64,11 @@ def show():
     choose_database_option.config(width=oMenuWidth)
 
     variable.set("点击选择数据库")
-    choose_database_option.grid(row=6,column=1, pady=10)
+    choose_database_option.grid(row=6, column=1, pady=10)
 
     def callback(*args):
         listbox1.grid(row=7, column=0, pady=10, sticky="e")
-        scorllbar.grid(row=8, column=0,padx=(40,0), pady=10, sticky=tk.E + tk.W)
+        scorllbar.grid(row=8, column=0, padx=(40, 0), pady=10, sticky=tk.E + tk.W)
         listbox1.delete(0, END)
         table_name = variable.get()
         remove_chars = '[·’!"\#$%&\'()＃！（）*+,./:;<=>?\@，：?￥★、…．＞【】［］《》？“”‘’\[\\]^`{|}~]+'
@@ -138,7 +138,18 @@ def exportWord():
         # document.add_paragraph(tableName,style='ListBullet')
         remove_chars = '[·’!"\#$%&\'()＃！（）*+,./:;<=>?\@，：?￥★、…．＞【】［］《》？“”‘’\[\\]^`{|}~]+'
         tableName = re.sub(remove_chars, '', tableName)
-        r = p.add_run('\n' + tableName)
+        table_schema = variable.get()
+        table_schema = re.sub(remove_chars, '', table_schema)
+
+        table_comment_sql = "select TABLE_COMMENT from information_schema.`TABLES`  where TABLE_SCHEMA='" + table_schema + "' and TABLE_NAME ='" + tableName + "'"
+        cur = mydb.cursor()
+        cur.execute(table_comment_sql)
+        table_comment = cur.fetchall()
+        table_comment_str = str(table_comment)
+        table_comment_str = re.sub(remove_chars, '', table_comment_str)
+        cur.close
+
+        r = p.add_run('\n' + table_comment_str + tableName)
         r.font.name = u'宋体'
         r.font.size = Pt(12)
         table = document.add_table(rows=len(singleTableData) + 1, cols=4, style='Table Grid')
